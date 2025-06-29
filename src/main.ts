@@ -29,7 +29,7 @@ async function main() {
   let jArgs = parseArgs();
   switch(jArgs?.cmd) {
     case cmd_map.mqtt:
-      await (await import('./lib/mqtt/mqtt-main')).mqttMain();
+      await (await import('./lib/cmd/mqttezd/mqtt-main')).mqttMain();
       break;
     case cmd_map.etc:
       console.log('etc');

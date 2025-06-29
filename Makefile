@@ -6,6 +6,6 @@ GO_BIN = julius_ezd_2025
 build-go:
 	go build -o $(GO_BIN_DIR)/$(GO_BIN) $(GO_SRC_DIR)/main.go
 run-go:
-	$(GO_BIN_DIR)/$(GO_BIN)
+	$(GO_BIN_DIR)/$(GO_BIN) mqtt
 watch-go:
 	air --build.cmd "make build-go" --build.bin "make run-go"
