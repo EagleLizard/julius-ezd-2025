@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/EagleLizard/julius-ezd-2025/src/lib/config"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -29,22 +30,32 @@ func MqttMain() {
 	opts.SetUsername(cfg.User)
 	opts.SetPassword(cfg.Password)
 	c := mqtt.NewClient(opts)
-	t := c.Connect()
-	t.Wait()
-	err = t.Error()
-	if err != nil {
-		panic(err)
+	if t := c.Connect(); t.Wait() && t.Error() != nil {
+		panic(t.Error())
 	}
-	t = c.Subscribe(devices_topic, 0, devicesTopicHandler)
-	t.Wait()
-	err = t.Error()
-	if err != nil {
-		panic(err)
+	msgCh := make(chan [2]string)
+	fn := func(client mqtt.Client, msg mqtt.Message) {
+		msgCh <- [2]string{msg.Topic(), string(msg.Payload())}
+	}
+	if t := c.Subscribe(devices_topic, 0, fn); t.Wait() && t.Error() != nil {
+		panic(t.Error())
+	}
+	receiveCount := 0
+	dcCh := make(chan struct{})
+	go func() {
+		time.Sleep(2 * time.Second)
+		dcCh <- struct{}{}
+	}()
+topic_loop:
+	for {
+		select {
+		case msg := <-msgCh:
+			receiveCount++
+			fmt.Printf("topic: %s, payload: %s\n", msg[0], msg[1])
+			fmt.Printf("count: %d\n", receiveCount)
+		case <-dcCh:
+			break topic_loop
+		}
 	}
 	// fmt.Printf("%+v\n", cfg)
-}
-
-func devicesTopicHandler(client mqtt.Client, msg mqtt.Message) {
-	fmt.Printf("TOPIC: %s\n", msg.Topic())
-	fmt.Printf("MSG: %s\n", msg.Payload())
 }
