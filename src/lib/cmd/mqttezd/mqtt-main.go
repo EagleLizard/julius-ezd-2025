@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/EagleLizard/julius-ezd-2025/src/lib/config"
+	z2mdevice "github.com/EagleLizard/julius-ezd-2025/src/lib/models/z2m-device"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
@@ -81,27 +82,6 @@ func devicesMsgHandler(msg string) {
 	}
 }
 
-/*
-friendly_name
-disabled
-ieee_address
-interview_completed
-interviewing
-network_address
-supported
-type
-*/
-type Z2mDevice struct {
-	Type               string `json:"type"`
-	FriendlyName       string `json:"friendly_name"`
-	Disabled           bool   `json:"disabled"`
-	IeeeAddress        string `json:"ieee_address`
-	InterviewCompleted bool   `json:"interview_completed"`
-	Interviewing       bool   `json:"interviewing"`
-	NetworkAddress     int    `json:"network_address"`
-	Supported          bool   `json:"supported"`
-	// Attrs              json.RawMessage `json:`
-}
 type Z2mDevicePayload struct {
 }
 
@@ -116,19 +96,10 @@ func parseDevices(rawDevices string) error {
 		return err
 	}
 	for _, deviceData := range rawDeviceArr {
-		var rawDevice map[string]interface{}
-		err = json.Unmarshal(deviceData, &rawDevice)
+		err = z2mdevice.ParseDevice(deviceData)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("%s\n", rawDevice["type"])
-		var z2mDevice Z2mDevice
-		err = json.Unmarshal(deviceData, &z2mDevice)
-		if err != nil {
-			return err
-		}
-		fmt.Printf("%+v\n", z2mDevice)
-
 	}
 	return nil
 }
