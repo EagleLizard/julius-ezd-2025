@@ -14,7 +14,11 @@
     "noUnusedLocals": true,
     "esModuleInterop": true,
     "sourceMap": true,
-    // "skipLibCheck": true // needed for vitest because of rollup4
+    /*
+    needed for vitest because of rollup4
+    needed for mqtt.js because of ws types
+    _*/
+    "skipLibCheck": true
   },
   "include": [
     "src/**/*"

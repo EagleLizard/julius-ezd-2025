@@ -1,6 +1,7 @@
 package mqttezd
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -51,11 +52,83 @@ topic_loop:
 		select {
 		case msg := <-msgCh:
 			receiveCount++
-			fmt.Printf("topic: %s, payload: %s\n", msg[0], msg[1])
+			msgRouter(msg[0], msg[1])
 			fmt.Printf("count: %d\n", receiveCount)
 		case <-dcCh:
 			break topic_loop
 		}
 	}
 	// fmt.Printf("%+v\n", cfg)
+}
+func msgRouter(topic string, payload string) {
+	switch topic {
+	case devices_topic:
+		devicesMsgHandler(payload)
+	default:
+		defaultMsgHandler(topic, payload)
+	}
+}
+
+func defaultMsgHandler(topic string, payload string) {
+	fmt.Printf("topic: %s, payload: %s\n", payload[0], payload[1])
+}
+
+func devicesMsgHandler(msg string) {
+	fmt.Printf("devices ~ %d\n", len(msg))
+	err := parseDevices(msg)
+	if err != nil {
+		panic(err)
+	}
+}
+
+/*
+friendly_name
+disabled
+ieee_address
+interview_completed
+interviewing
+network_address
+supported
+type
+*/
+type Z2mDevice struct {
+	Type               string `json:"type"`
+	FriendlyName       string `json:"friendly_name"`
+	Disabled           bool   `json:"disabled"`
+	IeeeAddress        string `json:"ieee_address`
+	InterviewCompleted bool   `json:"interview_completed"`
+	Interviewing       bool   `json:"interviewing"`
+	NetworkAddress     int    `json:"network_address"`
+	Supported          bool   `json:"supported"`
+	// Attrs              json.RawMessage `json:`
+}
+type Z2mDevicePayload struct {
+}
+
+/*
+taking this approach https://stackoverflow.com/a/30574518/4677252
+_
+*/
+func parseDevices(rawDevices string) error {
+	rawDeviceArr := []json.RawMessage{}
+	err := json.Unmarshal([]byte(rawDevices), &rawDeviceArr)
+	if err != nil {
+		return err
+	}
+	for _, deviceData := range rawDeviceArr {
+		var rawDevice map[string]interface{}
+		err = json.Unmarshal(deviceData, &rawDevice)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%s\n", rawDevice["type"])
+		var z2mDevice Z2mDevice
+		err = json.Unmarshal(deviceData, &z2mDevice)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%+v\n", z2mDevice)
+
+	}
+	return nil
 }

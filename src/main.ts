@@ -6,6 +6,7 @@ import assert from 'node:assert';
 const cmd_map = {
   mqtt: 'mqtt',
   etc: 'etc',
+  evt: 'evt',
 } as const;
 assert(Object.entries(cmd_map).every(([ key, val ]) => {
   return key === val;
@@ -30,6 +31,9 @@ async function main() {
   switch(jArgs?.cmd) {
     case cmd_map.mqtt:
       await (await import('./lib/cmd/mqttezd/mqtt-main')).mqttMain();
+      break;
+    case cmd_map.evt:
+      await (await import('./lib/cmd/evt/evt-main')).evtMain();
       break;
     case cmd_map.etc:
       console.log('etc');
