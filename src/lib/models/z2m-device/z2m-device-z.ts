@@ -1,6 +1,6 @@
 
 import z from 'zod/v4';
-import { Z2mDeviceExposesEnumZ, Z2mDeviceExposesLightZ, Z2mDeviceExposesNumericZ, Z2mDeviceExposesSwitchZ } from './z2m-device-exposes-z';
+import { Z2mDeviceExposesBinaryZ, Z2mDeviceExposesEnumZ, Z2mDeviceExposesLightZ, Z2mDeviceExposesNumericZ, Z2mDeviceExposesSwitchZ } from './z2m-device-exposes-z';
 
 /*
 Device types:
@@ -65,10 +65,60 @@ const Z2mRouterDeviceZSchema = z.object({
       Z2mDeviceExposesEnumZ.schema,
       Z2mDeviceExposesNumericZ.schema,
       Z2mDeviceExposesSwitchZ.schema,
-    ]))
+    ])),
     // options
+    /*
+      output from command:
+        cat devices.json | jq '[.[] | select(.type == "Router") | .definition.options.[]?.type] | unique'
+      [
+        "binary",
+        "numeric"
+      ]
+      Based on looking at the raw json output, the options generally match
+        the corresponding exposes schema
+    _*/
+    options: z.array(z.union([
+      Z2mDeviceExposesNumericZ.schema,
+      Z2mDeviceExposesBinaryZ.schema,
+    ])),
   }),
   // endpoints
+  endpoints: z.record(z.string(), z.object({
+    bindings: z.array(z.object({
+      cluster: z.string(),
+      target: z.object({
+        endpoint: z.number(),
+        ieee_address: z.string(),
+        /* only saw one type for this _*/
+        type: z.literal('endpoint'),
+      }),
+    })),
+    clusters: z.object({
+      input: z.array(z.string()),
+      output: z.array(z.string()),
+    }),
+    configured_reportings: z.array(
+      z.object({
+        attribute: z.string(),
+        cluster: z.string(),
+        maximum_report_interval: z.number(),
+        minimum_report_interval: z.number(),
+        reportable_change: z.union([
+          z.number(),
+          z.array(z.number()),
+        ]),
+      }),
+    ),
+    /*
+      I don't have any first-hand data for this, so relying on the examples from the docs
+    _*/
+    scenes: z.array(
+      z.object({
+        id: z.number(),
+        name: z.string(),
+      }),
+    ),
+  })),
   manufacturer: z.string(),
   model_id: z.string(),
   power_source: z.string(),
@@ -100,8 +150,23 @@ const Z2mEndDeviceZSchema = z.object({
       Z2mDeviceExposesLightZ.schema,
     ])),
     // options
+    /*
+      output from command:
+        cat devices.json | jq '[.[] | select(.type == "EndDevice") | .definition.options.[]?.type] | unique'
+      [
+        "binary",
+        "numeric"
+      ]
+    _*/
+    options: z.array(z.union([
+      Z2mDeviceExposesNumericZ.schema,
+      Z2mDeviceExposesBinaryZ.schema,
+    ])),
   }),
   // endpoints
+  endpoints: z.record(Z2mRouterDeviceZSchema.shape.endpoints.keyType, z.object({
+    ...Z2mRouterDeviceZSchema.shape.endpoints.valueType.shape
+  })),
   manufacturer: z.string(),
   model_id: z.string(),
   power_source: z.string(),
