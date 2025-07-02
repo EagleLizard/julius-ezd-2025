@@ -89,14 +89,6 @@ function parseZ2mDevice(rawDevice: unknown): Z2mDeviceZType {
     default:
       throw new Error(`Unsupported Device type: ${deviceObj.type}`);
   }
-  // console.log(deviceObj.type);
-  // if(z2mDevice.type === 'Router') {
-  //   console.log(z2mDevice);
-  // }
-  if(z2mDevice.type === 'EndDevice') {
-    // console.log(z2mDevice);
-    // console.log(deviceObj.definition);
-  }
   return z2mDevice;
 }
 

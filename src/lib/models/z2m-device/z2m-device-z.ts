@@ -9,7 +9,7 @@ Device types:
   - "EndDevice"
 _*/
 
-const Z2mDeviceBaseZSchema = z.object({
+const Z2mDeviceBaseZSchema = z.strictObject({
   type: z.literal([
     'Coordinator',
     'Router',
@@ -22,9 +22,46 @@ const Z2mDeviceBaseZSchema = z.object({
   interviewing: z.boolean(), // deprecated
   network_address: z.number(),
   supported: z.boolean(),
+  // endpoints
+  endpoints: z.record(z.string(), z.object({
+    bindings: z.array(z.object({
+      cluster: z.string(),
+      target: z.object({
+        endpoint: z.number(),
+        ieee_address: z.string(),
+        /* only saw one type first-hand _*/
+        type: z.literal('endpoint'),
+      }),
+    })),
+    clusters: z.object({
+      input: z.array(z.string()),
+      output: z.array(z.string()),
+    }),
+    configured_reportings: z.array(
+      z.object({
+        attribute: z.string(),
+        cluster: z.string(),
+        maximum_report_interval: z.number(),
+        minimum_report_interval: z.number(),
+        reportable_change: z.union([
+          z.number(),
+          z.array(z.number()),
+        ]),
+      }),
+    ),
+    /*
+      I don't have any first-hand data for this, so relying on the examples from the docs
+    _*/
+    scenes: z.array(
+      z.object({
+        id: z.number(),
+        name: z.string(),
+      }),
+    ),
+  })),
 });
 
-const Z2mCoordinatorDeviceZSchema = z.object({
+const Z2mCoordinatorDeviceZSchema = z.strictObject({
   ...Z2mDeviceBaseZSchema.shape,
   type: z.literal('Coordinator'),
 });
@@ -42,11 +79,11 @@ const Z2mCoordinatorDeviceZSchema = z.object({
   ]
 _*/
 
-const Z2mRouterDeviceZSchema = z.object({
+const Z2mRouterDeviceZSchema = z.strictObject({
   ...Z2mDeviceBaseZSchema.shape,
   type: z.literal('Router'),
   // definition
-  definition: z.object({
+  definition: z.strictObject({
     description: z.string(),
     model: z.string(),
     supports_ota: z.boolean(),
@@ -82,54 +119,17 @@ const Z2mRouterDeviceZSchema = z.object({
       Z2mDeviceExposesBinaryZ.schema,
     ])),
   }),
-  // endpoints
-  endpoints: z.record(z.string(), z.object({
-    bindings: z.array(z.object({
-      cluster: z.string(),
-      target: z.object({
-        endpoint: z.number(),
-        ieee_address: z.string(),
-        /* only saw one type for this _*/
-        type: z.literal('endpoint'),
-      }),
-    })),
-    clusters: z.object({
-      input: z.array(z.string()),
-      output: z.array(z.string()),
-    }),
-    configured_reportings: z.array(
-      z.object({
-        attribute: z.string(),
-        cluster: z.string(),
-        maximum_report_interval: z.number(),
-        minimum_report_interval: z.number(),
-        reportable_change: z.union([
-          z.number(),
-          z.array(z.number()),
-        ]),
-      }),
-    ),
-    /*
-      I don't have any first-hand data for this, so relying on the examples from the docs
-    _*/
-    scenes: z.array(
-      z.object({
-        id: z.number(),
-        name: z.string(),
-      }),
-    ),
-  })),
   manufacturer: z.string(),
   model_id: z.string(),
   power_source: z.string(),
   software_build_id: z.string(),
 });
 
-const Z2mEndDeviceZSchema = z.object({
+const Z2mEndDeviceZSchema = z.strictObject({
   ...Z2mDeviceBaseZSchema.shape,
   type: z.literal('EndDevice'),
   // definition
-  definition: z.object({
+  definition: z.strictObject({
     description: z.string(),
     model: z.string(),
     supports_ota: z.boolean(),
@@ -163,14 +163,11 @@ const Z2mEndDeviceZSchema = z.object({
       Z2mDeviceExposesBinaryZ.schema,
     ])),
   }),
-  // endpoints
-  endpoints: z.record(Z2mRouterDeviceZSchema.shape.endpoints.keyType, z.object({
-    ...Z2mRouterDeviceZSchema.shape.endpoints.valueType.shape
-  })),
   manufacturer: z.string(),
   model_id: z.string(),
   power_source: z.string(),
   software_build_id: z.string().optional(),
+  date_code: z.string().optional(),
 });
 
 export type Z2mCoordinatorDeviceZType = z.infer<typeof Z2mCoordinatorDeviceZSchema>;

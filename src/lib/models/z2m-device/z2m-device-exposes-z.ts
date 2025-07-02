@@ -24,10 +24,10 @@ const exposesBinaryValue = z.union([
   z.string(),
   z.boolean(),
 ]);
-const Z2mDeviceExposesBaseZSchema = z.object({
+const Z2mDeviceExposesBaseZSchema = z.strictObject({
   access: z.number(),
 });
-const Z2mDeviceExposesGenericBaseZSchema = z.object({
+const Z2mDeviceExposesGenericBaseZSchema = z.strictObject({
   ...Z2mDeviceExposesBaseZSchema.shape,
   /* common properties across Generic device exposes types _*/
   label: z.string(),
@@ -40,40 +40,37 @@ const Z2mDeviceExposesGenericBaseZSchema = z.object({
 /*
 GENERIC EXPOSES
 _*/
-const Z2mDeviceExposesBinaryZSchema = z.object({
+const Z2mDeviceExposesBinaryZSchema = z.strictObject({
   ...Z2mDeviceExposesGenericBaseZSchema.shape,
+  /*
+    see: https://www.zigbee2mqtt.io/guide/usage/exposes.html#binary
+  _*/
   type: z.literal('binary'),
-  // description: z.string(),
-  // label: z.string(),
-  // name: z.string(),
-  // property: z.string(),
   value_on: exposesBinaryValue,
   value_off: exposesBinaryValue,
-  value_toggle: exposesBinaryValue,
+  value_toggle: exposesBinaryValue.optional(),
 });
-const Z2mDeviceExposesNumericZSchema = z.object({
+const Z2mDeviceExposesNumericZSchema = z.strictObject({
   ...Z2mDeviceExposesGenericBaseZSchema.shape,
   type: z.literal('numeric'),
-  // description: z.string(),
-  // label: z.string(),
-  // name: z.string(),
-  // property: z.string(),
   value_max: z.number().optional(),
   value_min: z.number().optional(),
   value_step: z.number().optional(),
   unit: z.string().optional(),
-  presets: z.array(z.object({
-    description: z.string(),
-    name: z.string(),
-    value: z.number(),
-  })).optional(),
+  presets: z.array(
+    z.strictObject({
+      description: z.string(),
+      name: z.string(),
+      value: z.number(),
+    })
+  ).optional(),
 });
-const Z2mDeviceExposesEnumZSchema = z.object({
+const Z2mDeviceExposesEnumZSchema = z.strictObject({
   ...Z2mDeviceExposesGenericBaseZSchema.shape,
   type: z.literal('enum'),
   values: z.array(z.string()),
 });
-const Z2mDeviceExposesCompositeZSchema = z.object({
+const Z2mDeviceExposesCompositeZSchema = z.strictObject({
   ...Z2mDeviceExposesBaseZSchema.shape,
   type: z.literal('composite'),
   description: z.string(),
@@ -93,8 +90,8 @@ SPECIFIC EXPOSES
   see: https://www.zigbee2mqtt.io/guide/usage/exposes.html#specific
 _*/
 
-const Z2mDeviceExposesLightZSchema = z.object({
-  // ...Z2mDeviceExposesBaseZSchema.shape,
+const Z2mDeviceExposesLightZSchema = z.strictObject({
+  type: z.literal('light'),
   /*
     see: https://www.zigbee2mqtt.io/guide/usage/exposes.html#light
       "possible features are
@@ -111,8 +108,8 @@ const Z2mDeviceExposesLightZSchema = z.object({
     Z2mDeviceExposesCompositeZSchema,
   ]))
 });
-const Z2mDeviceExposesSwitchZSchema = z.object({
-  // ...Z2mDeviceExposesBaseZSchema.shape,
+const Z2mDeviceExposesSwitchZSchema = z.strictObject({
+  type: z.literal('switch'),
   features: z.array(
     Z2mDeviceExposesBinaryZSchema,
   )
@@ -120,7 +117,7 @@ const Z2mDeviceExposesSwitchZSchema = z.object({
 
 export type Z2mDeviceExposesBinaryZType = z.infer<typeof Z2mDeviceExposesBinaryZSchema>;
 export const Z2mDeviceExposesBinaryZ = {
-  schema: Z2mDeviceExposesBaseZSchema,
+  schema: Z2mDeviceExposesBinaryZSchema,
 } as const;
 export type Z2mDeviceExposesNumericZType = z.infer<typeof Z2mDeviceExposesNumericZSchema>;
 export const Z2mDeviceExposesNumericZ = {
