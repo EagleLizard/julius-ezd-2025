@@ -30,10 +30,10 @@ const Z2mDeviceExposesBaseZSchema = z.object({
 const Z2mDeviceExposesGenericBaseZSchema = z.object({
   ...Z2mDeviceExposesBaseZSchema.shape,
   /* common properties across Generic device exposes types _*/
-  description: z.string(),
   label: z.string(),
   name: z.string(),
   property: z.string(),
+  description: z.string(),
   category: z.string().optional(),
 });
 
@@ -82,9 +82,9 @@ const Z2mDeviceExposesCompositeZSchema = z.object({
   property: z.string(),
   /* features may contain any non-composite generic exposes types _*/
   features: z.array(z.union([
-    Z2mDeviceExposesBinaryZSchema.omit({ property: true }),
-    Z2mDeviceExposesNumericZSchema.omit({ property: true }),
-    Z2mDeviceExposesEnumZSchema.omit({ property: true }),
+    Z2mDeviceExposesBinaryZSchema.partial({ description: true }),
+    Z2mDeviceExposesNumericZSchema.partial({ description: true }),
+    Z2mDeviceExposesEnumZSchema.partial({ description: true }),
   ])).optional(),
 });
 
@@ -100,6 +100,10 @@ const Z2mDeviceExposesLightZSchema = z.object({
       "possible features are
         state, brightness, color_temp, color_xy, color_hs, min_brightness,
         level_config and color_temp_startup."
+    The supported types of features based on this are:
+      binary
+      numeric
+      composite
   _*/
   features: z.array(z.union([
     Z2mDeviceExposesBinaryZSchema,

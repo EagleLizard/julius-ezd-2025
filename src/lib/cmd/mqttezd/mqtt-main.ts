@@ -1,7 +1,8 @@
 
 import mqtt from'mqtt';
 import { juliusConfig } from '../../../config';
-import { Z2mCoordinatorDeviceZ, Z2mCoordinatorDeviceZType, Z2mDeviceZType, Z2mEndDeviceZ, Z2mEndDeviceZType, Z2mRouterDeviceZ, Z2mRouterDeviceZType } from '../../models/z2m-device/z2m-device-z';
+import { Z2mCoordinatorDeviceZ, Z2mDeviceZType, Z2mEndDeviceZ, Z2mRouterDeviceZ } from '../../models/z2m-device/z2m-device-z';
+import { Timer } from '../../util/timer';
 
 const z2m_prefix = 'zigbee2mqtt';
 const z2m_topics = {
@@ -58,12 +59,15 @@ function parseDevicesTopic(payload: Buffer<ArrayBufferLike>) {
     throw new Error(`Invalid Devices payload: Expected array, received: ${typeof payloadObj}`);
   }
   z2mDevices = [];
+  let parseDevicesTimer = Timer.start();
   for(let i = 0; i < payloadObj.length; i++) {
     let rawDevice = payloadObj[i];
     let device = parseZ2mDevice(rawDevice);
     z2mDevices.push(device);
   }
+  let parseDevicesMs = parseDevicesTimer.stop();
   console.log(z2mDevices);
+  console.log(`parse devices took: ${parseDevicesMs} ms`);
 }
 function parseZ2mDevice(rawDevice: unknown): Z2mDeviceZType {
   let deviceObj: Record<string, unknown>;
@@ -86,9 +90,9 @@ function parseZ2mDevice(rawDevice: unknown): Z2mDeviceZType {
       throw new Error(`Unsupported Device type: ${deviceObj.type}`);
   }
   // console.log(deviceObj.type);
-  if(z2mDevice.type === 'Router') {
-    console.log(z2mDevice);
-  }
+  // if(z2mDevice.type === 'Router') {
+  //   console.log(z2mDevice);
+  // }
   if(z2mDevice.type === 'EndDevice') {
     // console.log(z2mDevice);
     // console.log(deviceObj.definition);

@@ -1,6 +1,6 @@
 
 import z from 'zod/v4';
-import { Z2mDeviceExposesEnumZ, Z2mDeviceExposesNumericZ, Z2mDeviceExposesSwitchZ } from './z2m-device-exposes-z';
+import { Z2mDeviceExposesEnumZ, Z2mDeviceExposesLightZ, Z2mDeviceExposesNumericZ, Z2mDeviceExposesSwitchZ } from './z2m-device-exposes-z';
 
 /*
 Device types:
@@ -79,6 +79,28 @@ const Z2mEndDeviceZSchema = z.object({
   ...Z2mDeviceBaseZSchema.shape,
   type: z.literal('EndDevice'),
   // definition
+  definition: z.object({
+    description: z.string(),
+    model: z.string(),
+    supports_ota: z.boolean(),
+    vendor: z.string(),
+    // exposes
+    /*
+      output from command:
+        cat devices.json | jq '[[.[] | select(.type == "EndDevice")] | .[].definition.exposes.[].type] | unique'
+      [
+        "enum",
+        "light",
+        "numeric"
+      ]
+    _*/
+    exposes: z.array(z.union([
+      Z2mDeviceExposesEnumZ.schema,
+      Z2mDeviceExposesNumericZ.schema,
+      Z2mDeviceExposesLightZ.schema,
+    ])),
+    // options
+  }),
   // endpoints
   manufacturer: z.string(),
   model_id: z.string(),
