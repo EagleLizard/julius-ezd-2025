@@ -3,6 +3,7 @@ import mqtt from'mqtt';
 import { juliusConfig } from '../../../config';
 import { Z2mCoordinatorDeviceZ, Z2mDeviceZType, Z2mEndDeviceZ, Z2mRouterDeviceZ } from '../../models/z2m-device/z2m-device-z';
 import { Timer } from '../../util/timer';
+import { EzdLogger, logger } from '../../logger/logger';
 
 const z2m_prefix = 'zigbee2mqtt';
 const z2m_topics = {
@@ -10,20 +11,33 @@ const z2m_topics = {
   devices: `${z2m_prefix}/bridge/devices`,
 } as const;
 
+type MqttCtx = {
+  client: mqtt.MqttClient;
+  logger: EzdLogger;
+}
+
 export async function mqttMain() {
   const mqttCfg = juliusConfig.getMqttCfg();
   console.log('mqttMain');
-  console.log(mqttCfg);
   const client = mqtt.connect(mqttCfg.mqtt_server, {
     username: mqttCfg.mqtt_user,
     password: mqttCfg.mqtt_password,
   });
+  let mqttEtcLogger = await logger.init('mqtt-etc');
   let packet = await mqttConnect(client);
-  console.log('packet:');
-  console.log(packet);
+  // client.subscribe(`${z2m_prefix}/#`);
+  // client.subscribe('#');
+  // console.log('packet:');
+  // console.log(packet);
   // client.subscribe('#');
   // client.subscribe('zigbee2mqtt/bridge/info');
-  client.subscribe(z2m_topics.devices);
+  // client.subscribe(z2m_topics.devices);
+  mqttEtcLogger.info({
+    /*
+    TODO: wrap the logger to produce consistent log object properties
+    _*/
+    hello: 'world',
+  });
   client.on('message', msgRouter);
 }
 

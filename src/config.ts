@@ -12,7 +12,9 @@ type MqttConfig = Record<MqttConfigKey, string> & {
 
 export const juliusConfig = {
   getMqttCfg,
+  getEnvironment,
 } as const;
+
 function getMqttCfg(): MqttConfig {
   let cfg: Partial<MqttConfig>;
   cfg = {};
@@ -24,4 +26,8 @@ function getMqttCfg(): MqttConfig {
     cfg[currKey] = process.env[currKey];
   }
   return cfg as MqttConfig;
+}
+
+function getEnvironment() {
+  return process.env.environment ?? 'dev';
 }
