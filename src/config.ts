@@ -5,6 +5,8 @@ const mqtt_required_keys = [
   'mqtt_user',
   'mqtt_password',
 ] as const;
+const DEV_ENV_STR = 'dev';
+
 type MqttConfigKey = typeof mqtt_required_keys[number];
 type MqttConfig = Record<MqttConfigKey, string> & {
 
@@ -13,6 +15,7 @@ type MqttConfig = Record<MqttConfigKey, string> & {
 export const juliusConfig = {
   getMqttCfg,
   getEnvironment,
+  isDevEnv,
 } as const;
 
 function getMqttCfg(): MqttConfig {
@@ -28,6 +31,10 @@ function getMqttCfg(): MqttConfig {
   return cfg as MqttConfig;
 }
 
+function isDevEnv() {
+  return getEnvironment() === DEV_ENV_STR;
+}
+
 function getEnvironment() {
-  return process.env.environment ?? 'dev';
+  return process.env.ENVIRONMENT ?? DEV_ENV_STR;
 }

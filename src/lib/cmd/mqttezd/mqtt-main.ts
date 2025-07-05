@@ -3,7 +3,8 @@ import mqtt from'mqtt';
 import { juliusConfig } from '../../../config';
 import { Z2mCoordinatorDeviceZ, Z2mDeviceZType, Z2mEndDeviceZ, Z2mRouterDeviceZ } from '../../models/z2m-device/z2m-device-z';
 import { Timer } from '../../util/timer';
-import { EzdLogger, logger } from '../../logger/logger';
+import { logger } from '../../logger/logger';
+import { ezdLog } from '../../logger/ezd-log';
 
 const z2m_prefix = 'zigbee2mqtt';
 const z2m_topics = {
@@ -23,21 +24,17 @@ export async function mqttMain() {
     username: mqttCfg.mqtt_user,
     password: mqttCfg.mqtt_password,
   });
-  let mqttEtcLogger = await logger.init('mqtt-etc');
-  let packet = await mqttConnect(client);
   // client.subscribe(`${z2m_prefix}/#`);
-  // client.subscribe('#');
+  client.subscribe('#');
   // console.log('packet:');
   // console.log(packet);
   // client.subscribe('#');
   // client.subscribe('zigbee2mqtt/bridge/info');
   // client.subscribe(z2m_topics.devices);
-  mqttEtcLogger.info({
-    /*
-    TODO: wrap the logger to produce consistent log object properties
-    _*/
-    hello: 'world',
-  });
+
+  let packet = await mqttConnect(client);
+
+  // logger.info('mqtt-main started');
   client.on('message', msgRouter);
 }
 
@@ -108,12 +105,26 @@ function parseZ2mDevice(rawDevice: unknown): Z2mDeviceZType {
 
 function defaultMsgHandler(
   topic: string,
-  payload: Buffer<ArrayBufferLike>,
+  rawPayload: Buffer<ArrayBufferLike>,
   packet: mqtt.IPublishPacket
 ) {
+  let mqttLogger = ezdLog.init('mqtt-etc');
   let payloadStr: string;
-  payloadStr = payload.toString();
-  console.log(payloadStr);
+  let payload: unknown;
+  payloadStr = rawPayload.toString();
+  try {
+    payload = JSON.parse(payloadStr);
+  } catch(e) {
+    if(e instanceof SyntaxError) {
+      payload = payloadStr;
+    } else {
+      throw e;
+    }
+  }
+  mqttLogger.info({
+    topic,
+    payload,
+  });
 }
 
 function mqttConnect(client: mqtt.MqttClient): Promise<mqtt.IConnackPacket> {

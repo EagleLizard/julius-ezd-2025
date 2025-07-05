@@ -1,28 +1,21 @@
-''
-import pino, { Logger, LoggerOptions, StreamEntry } from 'pino';
-import { LOG_DIR_PATH, LOG_FILE_EXT } from '../../constants';
+
+import pino, { destination, DestinationStream, Logger, LoggerOptions, MultiStreamOptions, StreamEntry } from 'pino';
+import { APP_LOGGER_NAME, LOG_DIR_PATH, LOG_FILE_EXT } from '../../constants';
 import path from 'node:path';
 import { juliusConfig } from '../../config';
+import { files } from '../util/files';
 
-export type EzdLogger = Logger;
-
-/*
-  There can be multiple loggers, to different destinations.
-  Each type of logger should exist exactly once.
-  Currently they'll be identified by file name
-*/
-const loggerMap: Map<string, Logger> = new Map();
-
-const level = (juliusConfig.getEnvironment() !== 'prod')
+const level = (juliusConfig.isDevEnv())
   ? 'debug'
   : 'info'
 ;
 
-export const logger = {
-  init: initLogger,
-} as const;
+/*
+  Base application logger for general purpose.
+_*/
+export const logger = initLogger();
 
-async function initLogger(logName: string): Promise<EzdLogger> {
+function initLogger(): Logger {
   let logger: Logger | undefined;
   let opts: LoggerOptions;
   let streams: StreamEntry[];
@@ -31,13 +24,13 @@ async function initLogger(logName: string): Promise<EzdLogger> {
   let errorLogFileName: string;
   let logFilePath: string;
   let errorLogFilePath: string;
-  logger = loggerMap.get(logName);
-  if(logger !== undefined) {
-    return logger;
-  }
-  // await files.mkdirIfNotExist(LOG_DIR_PATH);
-  logFileName = `${logName}.${LOG_FILE_EXT}`;
-  errorLogFileName = `${logName}.error.${LOG_FILE_EXT}`;
+  let logStream: DestinationStream;
+  let errorLogStream: DestinationStream;
+
+  files.mkdirIfNotExist(LOG_DIR_PATH);
+
+  logFileName = `${APP_LOGGER_NAME}.${LOG_FILE_EXT}`;
+  errorLogFileName = `${APP_LOGGER_NAME}.error.${LOG_FILE_EXT}`;
   logFilePath = [
     LOG_DIR_PATH,
     logFileName,
@@ -46,20 +39,45 @@ async function initLogger(logName: string): Promise<EzdLogger> {
     LOG_DIR_PATH,
     errorLogFileName,
   ].join(path.sep);
-  streams = [
-    {
-      stream: pino.destination(logFilePath),
+  logStream = pino.transport({
+    target: 'pino/file',
+    options: {
+      destination: logFilePath,
     },
-    {
-      stream: pino.destination(errorLogFilePath),
-      level: 'error',
-    }
+  });
+  errorLogStream = pino.transport({
+    target: 'pino/file',
+    options: {
+      destination: errorLogFilePath,
+    },
+  });
+  streams = [
+    { level: 'error', stream: errorLogStream },
+    { level: level, stream: logStream },
+    { level: level, stream: process.stdout },
   ];
-  stream = pino.multistream(streams);
+  let multistreamOpts: MultiStreamOptions;
+  multistreamOpts = {
+    // dedupe: true // send logs only to the stream with the higher level
+  };
+  stream = pino.multistream(streams, multistreamOpts);
   opts = {
     level,
+    formatters: {
+      level: (label) => {
+        return {
+          level: label,
+        };
+      },
+      bindings: (bindings) => {
+        return {
+          pid: bindings.pid,
+          host: bindings.hostname,
+        };
+      }
+    },
+    timestamp: pino.stdTimeFunctions.isoTime,
   };
   logger = pino(opts, stream);
-  loggerMap.set(logName, logger);
   return logger;
 }

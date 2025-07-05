@@ -8,5 +8,5 @@ export const LOG_DIR_PATH = [
   BASE_DIR,
   LOG_DIR_NAME,
 ].join(path.sep);
-
+export const APP_LOGGER_NAME = 'app';
 export const LOG_FILE_EXT = 'log';

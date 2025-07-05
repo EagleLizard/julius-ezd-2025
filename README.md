@@ -11,6 +11,10 @@ References:
 
 1. https://www.zigbee2mqtt.io/guide/usage/mqtt_topics_and_messages.html
 
+## Storing state - SQLite
+
+I don't want to store state in json files nor do I want to roll a whole postgreSQL container so I'm going to roll sqlite.
+
 ## Typescript [TS]
 
 ### `zod` vs. `@sinclair/typebox`
