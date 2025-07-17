@@ -7,6 +7,7 @@ const cmd_map = {
   mqtt: 'mqtt',
   etc: 'etc',
   evt: 'evt',
+  evtq: 'evtq',
 } as const;
 assert(Object.entries(cmd_map).every(([ key, val ]) => {
   return key === val;
@@ -38,7 +39,10 @@ async function main() {
     case cmd_map.etc:
       console.log('etc');
       break;
-    case undefined:
+    case cmd_map.evtq:
+      await (await import('./lib/cmd/evt-queue/evt-queue-main')).evtQueueMain();
+      break;
+    default:
       printCmds();
   }
 }

@@ -16,7 +16,7 @@ _*/
 export const logger = initLogger();
 
 function initLogger(): Logger {
-  let logger: Logger | undefined;
+  let logger: Logger;
   let opts: LoggerOptions;
   let streams: StreamEntry[];
   let stream: pino.MultiStreamRes;

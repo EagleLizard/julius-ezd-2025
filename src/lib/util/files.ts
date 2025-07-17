@@ -13,8 +13,7 @@ export const files = {
 function checkDir(dirPath: string): boolean {
   let stats: Stats;
   try {
-    /* by default check r/w _*/
-    stats = fs.statSync(dirPath, );
+    stats = fs.statSync(dirPath);
   } catch(e) {
     if(prim.isObject(e) && e.code === 'ENOENT') {
       return false;
